@@ -4,8 +4,6 @@
     if (!(this instanceof DOM)) return new DOM( selector );
 
     this.element = document.querySelectorAll( selector );
-    if ( this.element.length === 1 )
-      return this.element = document.querySelector( selector );
   }
 
   DOM.prototype = {

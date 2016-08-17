@@ -44,22 +44,28 @@
       this.$image = DOM('[name="image-car"]');
       this.$containerImage = DOM('[data-js-image="image-car"]');
       this.urlNoImage = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQtIaPs4-y7dIpmrsurSkIMCvC1qjpMQC3jPxQ5kc_f4obOoyH8x3jFnRJp';
-    }
+    };
 
     Catalog.prototype.addVehicle = function( item ) {
       return this.vehicleList.push( item );
     };
 
+    Catalog.prototype.removeCar = function( event ) {
+      var index = event.target.dataset.jsRemove;
+      this.vehicleList.splice( index, 1 );
+      return this.createNewVehicle();
+    };
+
     Catalog.prototype.errorLoadImage = function() {
-      this.$image.value = "";
-      this.$image.setAttribute('placeholder', 'A imagem não existe');
-      this.$image.focus();
-      this.$containerImage.src = this.urlNoImage;
+      this.$image.get(0).value = "";
+      this.$image.get(0).setAttribute('placeholder', 'A imagem não existe');
+      this.$image.get(0).focus();
+      this.$containerImage.get(0).src = this.urlNoImage;
     };
 
     Catalog.prototype.handleRenderImage = function() {
-      if ( this.$image.value === '' ) return this.$containerImage.src = this.urlNoImage;
-      return this.$containerImage.src = this.$image.value;
+      if ( this.$image.get(0).value === '' ) return this.$containerImage.get(0).src = this.urlNoImage;
+      return this.$containerImage.get(0).src = this.$image.get(0).value;
     };
 
     Catalog.prototype.resetForm = function( item ) {
@@ -76,12 +82,16 @@
       this.$inputList.forEach(function( item ) {
         if ( item.name !== '' ) return this.vehicle[ item.name ] = item.value;
       }.bind( this ));
-      this.addVehicle( this.vehicle );
       this.createNewVehicle();
-      this.resetForm();
     };
 
     Catalog.prototype.createNewVehicle = function() {
+      this.addVehicle( this.vehicle );
+      this.updateTableVehicle();
+      this.resetForm();
+    };
+
+    Catalog.prototype.updateTableVehicle = function() {
       var html = '';
       this.vehicleList.forEach(function(item, index){
         html += '<tr>';
@@ -90,22 +100,29 @@
           html += '<td>' + item.year + '</td>';
           html += '<td>' + item.board + '</td>';
           html += '<td>' + item.color + '</td>';
+          html += '<td><button data-js-remove="' + index + '" class="btn">Remove</button></td>';
         html += '</tr>';
       });
 
-      this.$table.innerHTML = html;
-    }
+      this.$table.get(0).innerHTML = html;
+      this.setEventRemove();
+    };
+
+    Catalog.prototype.setEventRemove = function() {
+      this.$btnRemove = DOM('body [data-js-remove]');
+      this.$btnRemove.on('click', this.removeCar.bind(this), false );
+    };
 
     Catalog.prototype.setEvents = function() {
-      this.$form.addEventListener('submit', this.handleForm.bind( this ), false );
-      this.$image.addEventListener('blur', this.handleRenderImage.bind( this ), false );
-      this.$containerImage.addEventListener('error', this.errorLoadImage.bind(this), false );
-    }
+      this.$form.on('submit', this.handleForm.bind( this ));
+      this.$image.on('blur', this.handleRenderImage.bind( this ));
+      this.$containerImage.on('error', this.errorLoadImage.bind(this));
+    };
 
     Catalog.prototype.companyInfo = function( data ) {
-      this.$title.textContent = data.name;
-      this.$phone.textContent = data.phone;
-    }
+      this.$title.get(0).textContent = data.name;
+      this.$phone.get(0).textContent = data.phone;
+    };
 
     Catalog.prototype.loadCompanyInfo = function() {
       var ajax = new XMLHttpRequest();
@@ -116,13 +133,13 @@
               this.companyInfo( JSON.parse( ajax.responseText ) );
             }
           }.bind( this ));
-    }
+    };
 
     var catalog = new Catalog();
         catalog.loadCompanyInfo();
         catalog.setEvents();
   }
-  
+
   app();
 
 })();
