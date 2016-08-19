@@ -47,13 +47,16 @@
     };
 
     Catalog.prototype.addVehicle = function( item ) {
+      if ( DOM.isNull( item ) )
+        return;
+
       return this.vehicleList.push( item );
     };
 
-    Catalog.prototype.removeCar = function( event ) {
+    Catalog.prototype.removeVehicle = function( event ) {
       var index = event.target.dataset.jsRemove;
       this.vehicleList.splice( index, 1 );
-      return this.createNewVehicle();
+      return this.updateTableVehicle();
     };
 
     Catalog.prototype.errorLoadImage = function() {
@@ -110,7 +113,7 @@
 
     Catalog.prototype.setEventRemove = function() {
       this.$btnRemove = DOM('body [data-js-remove]');
-      this.$btnRemove.on('click', this.removeCar.bind(this), false );
+      this.$btnRemove.on('click', this.removeVehicle.bind(this), false );
     };
 
     Catalog.prototype.setEvents = function() {
