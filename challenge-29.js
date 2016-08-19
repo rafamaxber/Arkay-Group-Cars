@@ -41,16 +41,26 @@
       this.$table = DOM('[data-js-table="collums"]');
       this.$title = DOM('[data-js-info="title"]');
       this.$phone = DOM('[data-js-info="phone"]');
-      this.$image = DOM('[name="image-car"]');
-      this.$containerImage = DOM('[data-js-image="image-car"]');
+      this.$image = DOM('[name="image"]');
+      this.$containerImage = DOM('[data-js-image="image"]');
       this.urlNoImage = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQtIaPs4-y7dIpmrsurSkIMCvC1qjpMQC3jPxQ5kc_f4obOoyH8x3jFnRJp';
     };
 
     Catalog.prototype.addVehicle = function( item ) {
-      if ( DOM.isNull( item ) )
-        return;
-
       return this.vehicleList.push( item );
+    };
+
+    Catalog.prototype.saveVehicle = function( item ) {
+      var ajax = new XMLHttpRequest();
+          ajax.open('POST', 'http://localhost:3000/car');
+          ajax.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+          ajax.send( JSON.stringify( this.vehicle ) );
+          console.log( this.vehicle )
+          ajax.addEventListener('readystatechange', function() {
+            if ( ajax.status === 200 && ajax.readyState === 4 ) {
+              this.createTableVehicle();
+            }
+          }.bind( this ));
     };
 
     Catalog.prototype.removeVehicle = function( event ) {
@@ -85,23 +95,30 @@
       this.$inputList.forEach(function( item ) {
         if ( item.name !== '' ) return this.vehicle[ item.name ] = item.value;
       }.bind( this ));
-      this.createNewVehicle();
-    };
-
-    Catalog.prototype.createNewVehicle = function() {
+      this.saveVehicle();
       this.addVehicle( this.vehicle );
-      this.updateTableVehicle();
-      this.resetForm();
     };
 
-    Catalog.prototype.updateTableVehicle = function() {
+    Catalog.prototype.createTableVehicle = function() {
+      var ajax = new XMLHttpRequest();
+          ajax.open('GET', 'http://localhost:3000/car');
+          ajax.send( null );
+          ajax.addEventListener('readystatechange', function() {
+            if ( ajax.status === 200 && ajax.readyState === 4 ) {
+              this.updateTableVehicle( JSON.parse( ajax.responseText ) );
+              this.resetForm();
+            }
+          }.bind( this ));
+    };
+
+    Catalog.prototype.updateTableVehicle = function( data ) {
       var html = '';
-      this.vehicleList.forEach(function(item, index){
+      data.forEach(function(item, index){
         html += '<tr>';
-          html += '<td><img src="' + item['image-car'] + '" width="100px"></td>';
-          html += '<td>' + item.model + '</td>';
+          html += '<td><img src="' + item['image'] + '" width="100px"></td>';
+          html += '<td>' + item.brandModel + '</td>';
           html += '<td>' + item.year + '</td>';
-          html += '<td>' + item.board + '</td>';
+          html += '<td>' + item.plate + '</td>';
           html += '<td>' + item.color + '</td>';
           html += '<td><button data-js-remove="' + index + '" class="btn">Remove</button></td>';
         html += '</tr>';
@@ -141,6 +158,7 @@
     var catalog = new Catalog();
         catalog.loadCompanyInfo();
         catalog.setEvents();
+        catalog.createTableVehicle();
   }
 
   app();
