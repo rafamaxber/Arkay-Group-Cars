@@ -51,16 +51,14 @@
     };
 
     Catalog.prototype.saveVehicle = function( item ) {
-      var ajax = new XMLHttpRequest();
-          ajax.open('POST', 'http://localhost:3000/car');
-          ajax.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-          ajax.send( JSON.stringify( this.vehicle ) );
-          console.log( this.vehicle )
-          ajax.addEventListener('readystatechange', function() {
-            if ( ajax.status === 200 && ajax.readyState === 4 ) {
-              this.createTableVehicle();
-            }
-          }.bind( this ));
+      var config = {
+        method: 'POST',
+        url: 'http://localhost:3000/car'
+      }
+      this.ajax( config, this.vehicle, function( object, error ) {
+        if ( error ) return;
+        this.createTableVehicle();
+      }.bind( this ));
     };
 
     Catalog.prototype.removeVehicle = function( event ) {
@@ -99,16 +97,29 @@
       this.addVehicle( this.vehicle );
     };
 
-    Catalog.prototype.createTableVehicle = function() {
+    Catalog.prototype.ajax = function( config, data, callback ) {
+      var data = (!!data) ? JSON.stringify( data ) : null ;
       var ajax = new XMLHttpRequest();
-          ajax.open('GET', 'http://localhost:3000/car');
-          ajax.send( null );
-          ajax.addEventListener('readystatechange', function() {
-            if ( ajax.status === 200 && ajax.readyState === 4 ) {
-              this.updateTableVehicle( JSON.parse( ajax.responseText ) );
-              this.resetForm();
-            }
-          }.bind( this ));
+      ajax.open( config.method, config.url );
+      ajax.send( data );
+      ajax.onload = function() {
+        return callback( JSON.parse( ajax.responseText ) );
+      }
+      ajax.onerror = function( error ) {
+        return callback( JSON.parse( ajax.responseText ), error );
+      }
+    }
+
+    Catalog.prototype.createTableVehicle = function() {
+      var config = {
+        method: 'GET',
+        url: 'http://localhost:3000/car'
+      }
+      this.ajax( config, null, function( object, error ) {
+        if ( error ) return;
+        this.updateTableVehicle( object );
+        this.resetForm();
+      }.bind( this ));
     };
 
     Catalog.prototype.updateTableVehicle = function( data ) {
@@ -145,14 +156,14 @@
     };
 
     Catalog.prototype.loadCompanyInfo = function() {
-      var ajax = new XMLHttpRequest();
-          ajax.open( 'GET', 'company.json' );
-          ajax.send( null );
-          ajax.addEventListener('readystatechange', function() {
-            if ( ajax.status === 200 && ajax.readyState === 4 ) {
-              this.companyInfo( JSON.parse( ajax.responseText ) );
-            }
-          }.bind( this ));
+      var config = {
+        method: 'GET',
+        url: 'company.json'
+      }
+      this.ajax( config, null, function( object, error ) {
+        if ( error ) return;
+        this.companyInfo( object );
+      }.bind( this ));
     };
 
     var catalog = new Catalog();
