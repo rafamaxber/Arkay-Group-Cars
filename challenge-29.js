@@ -46,8 +46,20 @@
       this.urlNoImage = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQtIaPs4-y7dIpmrsurSkIMCvC1qjpMQC3jPxQ5kc_f4obOoyH8x3jFnRJp';
     };
 
-    Catalog.prototype.addVehicle = function( item ) {
-      return this.vehicleList.push( item );
+    Catalog.prototype.companyInfo = function( data ) {
+      this.$title.get(0).textContent = data.name;
+      this.$phone.get(0).textContent = data.phone;
+    };
+
+    Catalog.prototype.loadCompanyInfo = function() {
+      var config = {
+        method: 'GET',
+        url: 'company.json'
+      }
+      this.ajax( config, null, function( object, error ) {
+        if ( error ) return;
+        this.companyInfo( object );
+      }.bind( this ));
     };
 
     Catalog.prototype.saveVehicle = function( item ) {
@@ -62,53 +74,16 @@
     };
 
     Catalog.prototype.removeVehicle = function( event ) {
+      var config = {
+        method: 'DELETE',
+        url: 'http://localhost:3000/car'
+      }
       var index = event.target.dataset.jsRemove;
-      this.vehicleList.splice( index, 1 );
-      return this.updateTableVehicle();
-    };
-
-    Catalog.prototype.errorLoadImage = function() {
-      this.$image.get(0).value = "";
-      this.$image.get(0).setAttribute('placeholder', 'A imagem não existe');
-      this.$image.get(0).focus();
-      this.$containerImage.get(0).src = this.urlNoImage;
-    };
-
-    Catalog.prototype.handleRenderImage = function() {
-      if ( this.$image.get(0).value === '' ) return this.$containerImage.get(0).src = this.urlNoImage;
-      return this.$containerImage.get(0).src = this.$image.get(0).value;
-    };
-
-    Catalog.prototype.resetForm = function( item ) {
-      this.$containerImage.src = this.urlNoImage;
-      this.$inputList.forEach(function( item ) {
-        item.value = '';
-      });
-      this.$inputList.get(0).focus();
-    };
-
-    Catalog.prototype.handleForm = function( event ) {
-      event.preventDefault();
-      this.vehicle = {};
-      this.$inputList.forEach(function( item ) {
-        if ( item.name !== '' ) return this.vehicle[ item.name ] = item.value;
+      this.ajax( config, this.vehicleList[index], function( object, error ) {
+        if ( error ) return;
+        this.createTableVehicle();
       }.bind( this ));
-      this.saveVehicle();
-      this.addVehicle( this.vehicle );
     };
-
-    Catalog.prototype.ajax = function( config, data, callback ) {
-      var data = (!!data) ? JSON.stringify( data ) : null ;
-      var ajax = new XMLHttpRequest();
-      ajax.open( config.method, config.url );
-      ajax.send( data );
-      ajax.onload = function() {
-        return callback( JSON.parse( ajax.responseText ) );
-      }
-      ajax.onerror = function( error ) {
-        return callback( JSON.parse( ajax.responseText ), error );
-      }
-    }
 
     Catalog.prototype.createTableVehicle = function() {
       var config = {
@@ -124,7 +99,9 @@
 
     Catalog.prototype.updateTableVehicle = function( data ) {
       var html = '';
+      this.vehicleList = [];
       data.forEach(function(item, index){
+        this.vehicleList.push(item);
         html += '<tr>';
           html += '<td><img src="' + item['image'] + '" width="100px"></td>';
           html += '<td>' + item.brandModel + '</td>';
@@ -133,10 +110,27 @@
           html += '<td>' + item.color + '</td>';
           html += '<td><button data-js-remove="' + index + '" class="btn">Remove</button></td>';
         html += '</tr>';
-      });
+      }.bind( this ));
 
       this.$table.get(0).innerHTML = html;
       this.setEventRemove();
+    };
+
+    Catalog.prototype.resetForm = function( item ) {
+      this.$containerImage.get(0).src = this.urlNoImage;
+      this.$inputList.forEach(function( item ) {
+        item.value = '';
+      });
+      this.$inputList.get(0).focus();
+    };
+
+    Catalog.prototype.handleForm = function( event ) {
+      event.preventDefault();
+      this.vehicle = {};
+      this.$inputList.forEach(function( item ) {
+        if ( item.name !== '' ) return this.vehicle[ item.name ] = item.value;
+      }.bind( this ));
+      this.saveVehicle();
     };
 
     Catalog.prototype.setEventRemove = function() {
@@ -150,20 +144,30 @@
       this.$containerImage.on('error', this.errorLoadImage.bind(this));
     };
 
-    Catalog.prototype.companyInfo = function( data ) {
-      this.$title.get(0).textContent = data.name;
-      this.$phone.get(0).textContent = data.phone;
+    Catalog.prototype.ajax = function( config, data, callback ) {
+      var data = (!!data) ? JSON.stringify( data ) : null;
+      var ajax = new XMLHttpRequest();
+      ajax.open( config.method, config.url );
+      ajax.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+      ajax.send( data );
+      ajax.onload = function() {
+        return callback( JSON.parse( ajax.responseText ) );
+      }
+      ajax.onerror = function( error ) {
+        return callback( JSON.parse( ajax.responseText ), error );
+      }
+    }
+
+    Catalog.prototype.errorLoadImage = function() {
+      this.$image.get(0).value = "";
+      this.$image.get(0).setAttribute('placeholder', 'A imagem não existe');
+      this.$image.get(0).focus();
+      this.$containerImage.get(0).src = this.urlNoImage;
     };
 
-    Catalog.prototype.loadCompanyInfo = function() {
-      var config = {
-        method: 'GET',
-        url: 'company.json'
-      }
-      this.ajax( config, null, function( object, error ) {
-        if ( error ) return;
-        this.companyInfo( object );
-      }.bind( this ));
+    Catalog.prototype.handleRenderImage = function() {
+      if ( this.$image.get(0).value === '' ) return this.$containerImage.get(0).src = this.urlNoImage;
+      return this.$containerImage.get(0).src = this.$image.get(0).value;
     };
 
     var catalog = new Catalog();
